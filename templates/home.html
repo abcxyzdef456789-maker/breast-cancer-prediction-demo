@@ -1,0 +1,412 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="description" content="An interactive, educational breast cancer classification project using a Random Forest model.">
+  <title>CellScope | Breast Cancer Classification Lab</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='style.css', v='20261113-ui4') }}">
+</head>
+<body id="top">
+  <header class="site-header">
+    <div class="header-inner">
+      <a class="brand" href="{{ url_for('home') }}" aria-label="CellScope home">
+        <span class="brand-mark" aria-hidden="true">+</span>
+        <span>CellScope <small>DATA SCIENCE LAB</small></span>
+      </a>
+      <nav class="top-nav" aria-label="Main navigation">
+        <a href="#panel-predictor" data-tab-target="panel-predictor">Predictor</a>
+        <a href="#panel-analysis" data-tab-target="panel-analysis">Analysis</a>
+        <a href="#panel-explorer" data-tab-target="panel-explorer">Explore data</a>
+        <a href="#panel-about" data-tab-target="panel-about">About</a>
+      </nav>
+      <span class="header-status"><span></span> EDUCATIONAL DEMO</span>
+    </div>
+  </header>
+
+  <main class="page">
+    <section class="hero">
+      <div class="hero-copy">
+        <p class="eyebrow"><span class="eyebrow-line"></span> MACHINE LEARNING · CLASSIFICATION</p>
+        <h1>Inside a cell,<br><span>through data.</span></h1>
+        <p class="intro-copy">
+          Explore how a Random Forest learns from cell measurements. Adjust the inputs,
+          inspect the model's vote, and see how a classification project is evaluated.
+        </p>
+        <div class="objective">
+          <span>PROJECT OBJECTIVE</span>
+          <p>Build and evaluate a machine-learning classifier that uses five cell measurements to predict a dataset label, then explain its results with model comparisons and visual analysis.</p>
+        </div>
+        <a class="hero-link" href="#panel-predictor" data-tab-target="panel-predictor">Explore the interactive model <span aria-hidden="true">↓</span></a>
+      </div>
+      <div class="hero-visual" aria-hidden="true">
+        <div class="orbit orbit-one"></div>
+        <div class="orbit orbit-two"></div>
+        <div class="cell cell-large"><span></span></div>
+        <div class="cell cell-small"></div>
+        <div class="visual-caption"><span>569</span> labeled samples</div>
+        <span class="visual-dot dot-one"></span><span class="visual-dot dot-two"></span><span class="visual-dot dot-three"></span>
+      </div>
+    </section>
+
+    <section class="notice" role="note">
+      <span class="notice-icon" aria-hidden="true">i</span>
+      <p><strong>Classroom project, not a medical tool.</strong> This model cannot screen, diagnose, or guide treatment. Its results can be wrong and must not be used for health decisions.</p>
+      <span class="notice-tag">PLEASE READ</span>
+    </section>
+
+    <section class="overview-grid" aria-label="Dataset overview">
+      <article class="overview-card">
+        <span class="overview-icon icon-purple" aria-hidden="true">▦</span>
+        <div><span class="overview-label">DATASET RECORDS</span><strong>{{ dataset_counts.total }}</strong><small>labeled examples</small></div>
+      </article>
+      <article class="overview-card">
+        <span class="overview-icon icon-green" aria-hidden="true">B</span>
+        <div><span class="overview-label">BENIGN CLASS</span><strong>{{ dataset_counts.benign }}</strong><small>{{ "%.1f"|format(dataset_counts.benign / dataset_counts.total * 100) }}% of dataset</small></div>
+      </article>
+      <article class="overview-card">
+        <span class="overview-icon icon-pink" aria-hidden="true">M</span>
+        <div><span class="overview-label">MALIGNANT CLASS</span><strong>{{ dataset_counts.malignant }}</strong><small>{{ "%.1f"|format(dataset_counts.malignant / dataset_counts.total * 100) }}% of dataset</small></div>
+      </article>
+      <article class="overview-card">
+        <span class="overview-icon icon-purple" aria-hidden="true">◎</span>
+        <div><span class="overview-label">RANDOM FOREST</span><strong>300</strong><small>decision trees</small></div>
+      </article>
+    </section>
+
+    <div class="section-tabs" role="tablist" aria-label="Project sections">
+      <button class="section-tab" id="tab-predictor" type="button" role="tab" aria-selected="true" aria-controls="panel-predictor" tabindex="0" data-tab-target="panel-predictor">Prediction</button>
+      <button class="section-tab" id="tab-workflow" type="button" role="tab" aria-selected="false" aria-controls="panel-workflow" tabindex="-1" data-tab-target="panel-workflow">Workflow</button>
+      <button class="section-tab" id="tab-evaluation" type="button" role="tab" aria-selected="false" aria-controls="panel-evaluation" tabindex="-1" data-tab-target="panel-evaluation">Evaluation</button>
+      <button class="section-tab" id="tab-analysis" type="button" role="tab" aria-selected="false" aria-controls="panel-analysis" tabindex="-1" data-tab-target="panel-analysis">Model comparison</button>
+      <button class="section-tab" id="tab-explainability" type="button" role="tab" aria-selected="false" aria-controls="panel-explainability" tabindex="-1" data-tab-target="panel-explainability">Explainability</button>
+      <button class="section-tab" id="tab-explorer" type="button" role="tab" aria-selected="false" aria-controls="panel-explorer" tabindex="-1" data-tab-target="panel-explorer">Dataset</button>
+      <button class="section-tab" id="tab-architecture" type="button" role="tab" aria-selected="false" aria-controls="panel-architecture" tabindex="-1" data-tab-target="panel-architecture">Architecture</button>
+      <button class="section-tab" id="tab-about" type="button" role="tab" aria-selected="false" aria-controls="panel-about" tabindex="-1" data-tab-target="panel-about">Project notes</button>
+    </div>
+
+    <div class="tab-panels">
+      <section class="card prediction-card tab-panel" id="panel-predictor" role="tabpanel" aria-labelledby="tab-predictor" tabindex="0">
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">01 / INTERACTIVE PREDICTOR</p>
+            <h2>Explore a sample</h2>
+            <p class="section-subtitle">Enter five measurements, or load a real example row from the dataset.</p>
+          </div>
+          <span class="step-badge">5 FEATURES</span>
+        </div>
+
+        <div class="sample-toolbar">
+          <span class="sample-label">QUICK START</span>
+          <button class="sample-button" type="button" data-example="benign">↗ Benign example</button>
+          <button class="sample-button" type="button" data-example="malignant">↗ Malignant example</button>
+        </div>
+
+        {% if error %}
+          <div class="message error-message" role="alert">{{ error }}</div>
+        {% endif %}
+
+        <form id="prediction-form" method="post" action="{{ url_for('home') }}">
+          <div class="form-grid">
+            {% for feature in features %}
+              <label class="field" for="{{ feature.name }}">
+                <span class="field-title">{{ feature.label }} <small>({{ feature.unit }})</small></span>
+                <span class="field-hint">{{ feature.description }}</span>
+                <input
+                  id="{{ feature.name }}"
+                  name="{{ feature.name }}"
+                  type="number"
+                  step="any"
+                  min="0"
+                  value="{{ values[feature.name] }}"
+                  placeholder="{{ "%.2f"|format((feature_ranges[feature.name][0] + feature_ranges[feature.name][1]) / 2) }}"
+                  required
+                >
+                <span class="field-range">Dataset range: {{ feature_ranges[feature.name][0] }}–{{ feature_ranges[feature.name][1] }}</span>
+              </label>
+            {% endfor %}
+          </div>
+          <div class="form-actions">
+            <button class="button" id="submit-button" type="submit">Run model prediction <span aria-hidden="true">→</span></button>
+            <button class="clear-button" id="clear-button" type="button">Clear inputs</button>
+          </div>
+        </form>
+
+        {% if result %}
+          <div class="result {% if result.is_malignant %}result-alert{% else %}result-calm{% endif %}" role="status" aria-live="polite">
+            <div class="result-topline">
+              <span class="result-kicker">MODEL CLASS ESTIMATE</span>
+              <span class="result-label">{% if result.is_malignant %}M{% else %}B{% endif %} · {{ result.label }}</span>
+            </div>
+            <h3>{{ result.description }}</h3>
+            <div class="confidence-score">
+              <span>PREDICTION SCORE <small>(Random Forest tree-vote share)</small></span>
+              <strong>Malignant: {{ "%.1f"|format(result.malignant_vote * 100) }}% <i>·</i> Benign: {{ "%.1f"|format(result.benign_vote * 100) }}%</strong>
+              <small>Predicted class vote: {{ "%.1f"|format(result.predicted_vote * 100) }}% · This is not a calibrated medical confidence or a person's cancer risk.</small>
+            </div>
+            {% if result.out_of_range %}
+              <p class="range-warning"><strong>Input outside dataset range:</strong> {{ result.out_of_range|join(", ")|replace("_", " ") }}. The prediction may be unreliable for these values.</p>
+            {% endif %}
+            <div class="vote-heading"><span>How the trees voted</span><small>Vote share, not medical confidence</small></div>
+            <div class="vote-row"><span>Benign</span><div class="vote-track"><span class="vote-fill vote-benign" style="width: {{ (result.benign_vote * 100)|round(1) }}%"></span></div><strong>{{ "%.1f"|format(result.benign_vote * 100) }}%</strong></div>
+            <div class="vote-row"><span>Malignant</span><div class="vote-track"><span class="vote-fill vote-malignant" style="width: {{ (result.malignant_vote * 100)|round(1) }}%"></span></div><strong>{{ "%.1f"|format(result.malignant_vote * 100) }}%</strong></div>
+            <small class="result-footnote">These percentages show the forest's class vote shares. They are not calibrated medical probabilities or a person's cancer risk.</small>
+            <div class="local-shap">
+              <div class="vote-heading"><span>SHAP explanation for this sample</span><small>Effect on malignant-class model output</small></div>
+              {% for item in result.shap_rows %}
+                <div class="shap-row">
+                  <span>{{ item.label }}</span>
+                  <span class="shap-effect {% if item.impact >= 0 %}shap-positive{% else %}shap-negative{% endif %}">
+                    {% if item.impact >= 0 %}+{% endif %}{{ "%.4f"|format(item.impact) }}
+                  </span>
+                </div>
+              {% endfor %}
+              <small class="result-footnote">Positive values push the model output toward malignant; negative values push it toward benign. SHAP is a model explanation, not a medical cause.</small>
+            </div>
+          </div>
+        {% endif %}
+      </section>
+
+      <section class="card model-card tab-panel" id="panel-workflow" role="tabpanel" aria-labelledby="tab-workflow" tabindex="0" hidden>
+        <div class="section-heading">
+          <div>
+            <p class="eyebrow">02 / MODEL WORKFLOW</p>
+            <h2>From data to prediction</h2>
+          </div>
+          <span class="workflow-mark" aria-hidden="true">✳</span>
+        </div>
+        <ol class="workflow">
+          <li><span>01</span><div><strong>Load & inspect</strong><small>{{ dataset_counts.total }} labeled rows from the Wisconsin diagnostic dataset.</small></div></li>
+          <li><span>02</span><div><strong>Prepare features</strong><small>Choose five numeric measurements; encode benign as 0 and malignant as 1.</small></div></li>
+          <li><span>03</span><div><strong>Train the forest</strong><small>{{ dataset_counts.training }} rows train 300 trees; each learns different decision rules.</small></div></li>
+          <li><span>04</span><div><strong>Evaluate fairly</strong><small>{{ dataset_counts.test }} unseen rows are held aside for model evaluation.</small></div></li>
+          <li><span>05</span><div><strong>Compare votes</strong><small>The forest predicts the class with the largest share of tree votes.</small></div></li>
+        </ol>
+        <div class="split-panel">
+          <div class="split-title"><span>DATA SPLIT</span><strong>80 / 20</strong></div>
+          <div class="split-track" aria-label="80 percent training data and 20 percent testing data"><span></span></div>
+          <div class="split-legend"><span><i></i> Training · {{ dataset_counts.training }}</span><span><i></i> Testing · {{ dataset_counts.test }}</span></div>
+        </div>
+        <div class="class-balance">
+          <div class="split-title"><span>CLASS BALANCE</span><small>All dataset records</small></div>
+          <div class="balance-track" aria-label="Dataset class proportions">
+            <span style="width: {{ (dataset_counts.benign / dataset_counts.total * 100)|round(1) }}%"></span>
+          </div>
+          <div class="split-legend"><span><i></i> Benign {{ dataset_counts.benign }}</span><span><i></i> Malignant {{ dataset_counts.malignant }}</span></div>
+        </div>
+      </section>
+
+    <section class="card results-card tab-panel" id="panel-evaluation" role="tabpanel" aria-labelledby="tab-evaluation" tabindex="0" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">03 / HELD-OUT EVALUATION</p>
+          <h2>How did the model perform?</h2>
+          <p class="section-subtitle">Measured only on data the model did not train on. Results can vary with a different dataset or split.</p>
+        </div>
+        <span class="step-badge">{{ metrics.test_size }} TEST SAMPLES</span>
+      </div>
+      <div class="metric-grid">
+        <article class="metric"><span>Accuracy</span><strong>{{ "%.1f"|format(metrics.accuracy * 100) }}<small>%</small></strong><div class="metric-track"><span style="width: {{ (metrics.accuracy * 100)|round(1) }}%"></span></div><p>Correct predictions overall</p></article>
+        <article class="metric"><span>Precision · malignant</span><strong>{{ "%.1f"|format(metrics.precision * 100) }}<small>%</small></strong><div class="metric-track"><span style="width: {{ (metrics.precision * 100)|round(1) }}%"></span></div><p>Predicted malignant that were correct</p></article>
+        <article class="metric"><span>Recall · malignant</span><strong>{{ "%.1f"|format(metrics.recall * 100) }}<small>%</small></strong><div class="metric-track"><span style="width: {{ (metrics.recall * 100)|round(1) }}%"></span></div><p>Actual malignant records the model found</p></article>
+        <article class="metric"><span>F1 score · malignant</span><strong>{{ "%.1f"|format(metrics.f1 * 100) }}<small>%</small></strong><div class="metric-track"><span style="width: {{ (metrics.f1 * 100)|round(1) }}%"></span></div><p>Balance between precision and recall</p></article>
+        <article class="metric metric-wide"><span>ROC-AUC</span><strong>{{ "%.3f"|format(metrics.roc_auc) }}</strong><div class="metric-track"><span style="width: {{ (metrics.roc_auc * 100)|round(1) }}%"></span></div><p>How well the model separates the two classes across thresholds</p></article>
+      </div>
+
+      <div class="detail-grid">
+        <div class="detail-panel">
+          <h3>Confusion matrix</h3>
+          <p class="muted small-copy">Rows are actual classes; columns are model predictions.</p>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ACTUAL ↓</th><th>BENIGN</th><th>MALIGNANT</th></tr></thead>
+              <tbody>
+                <tr><th>Benign</th><td class="matrix-correct">{{ metrics.true_benign_predicted_benign }}</td><td>{{ metrics.true_benign_predicted_malignant }}</td></tr>
+                <tr><th>Malignant</th><td class="matrix-error">{{ metrics.true_malignant_predicted_benign }}</td><td class="matrix-correct">{{ metrics.true_malignant_predicted_malignant }}</td></tr>
+              </tbody>
+            </table>
+          </div>
+          <div class="matrix-legend"><span><i class="legend-correct"></i> Correct class</span><span><i class="legend-error"></i> Misclassified</span></div>
+        </div>
+        <div class="detail-panel">
+          <h3>What influenced the forest?</h3>
+          <p class="muted small-copy">Relative feature importance for this fitted model—not cause, risk, or medical significance.</p>
+          <ul class="importance-list">
+            {% for feature_name, importance in feature_importances %}
+              <li>
+                <span>{{ feature_name.replace('_', ' ') }}</span>
+                <span class="bar-track"><span class="bar" style="width: {{ (importance * 100)|round(1) }}%"></span></span>
+                <strong>{{ "%.1f"|format(importance * 100) }}%</strong>
+              </li>
+            {% endfor %}
+          </ul>
+        </div>
+      </div>
+    </section>
+
+    <section class="card results-card analysis-card tab-panel" id="panel-analysis" role="tabpanel" aria-labelledby="tab-analysis" tabindex="0" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">04 / VISUAL ANALYSIS</p>
+          <h2>Compare models & explore patterns</h2>
+          <p class="section-subtitle">Every model is compared on the same held-out test records.</p>
+        </div>
+        <a class="download-button" href="{{ url_for('download_report') }}">↓ Export PDF report</a>
+      </div>
+      <div class="analysis-grid">
+        <article class="chart-panel">
+          <div class="chart-heading"><div><h3>ROC curve</h3><p>True-positive vs false-positive rate at different thresholds.</p></div><span class="chart-badge">TEST DATA</span></div>
+          <img class="chart-image" src="{{ roc_plot }}" alt="ROC curve comparing Random Forest, Logistic Regression, and Gradient Boosting on held-out data">
+          <p class="chart-note">A curve nearer the top-left generally separates the classes better on this test split. AUC is not a guarantee of clinical performance.</p>
+        </article>
+        <article class="chart-panel">
+          <div class="chart-heading"><div><h3>Feature correlation</h3><p>Pairwise Pearson correlations across the five measurements.</p></div><span class="chart-badge">DATASET</span></div>
+          <img class="chart-image" src="{{ correlation_plot }}" alt="Correlation heatmap for the five model input features">
+          <p class="chart-note">Values range from −1 to +1. Correlation describes association, not causation.</p>
+        </article>
+      </div>
+
+      <div class="comparison-wrap">
+        <div class="chart-heading"><div><h3>Multiple model comparison</h3><p>Same train/test split, several classification algorithms.</p></div></div>
+        <div class="table-wrap">
+          <table class="comparison-table">
+            <thead><tr><th>MODEL</th><th>ACCURACY</th><th>PRECISION</th><th>RECALL</th><th>F1</th><th>ROC-AUC</th></tr></thead>
+            <tbody>
+              {% for entry in model_comparison %}
+                <tr {% if entry.name == "Random Forest" %}class="selected-model"{% endif %}>
+                  <th>{{ entry.name }}{% if entry.name == "Random Forest" %}<span class="current-tag">PREDICTOR</span>{% endif %}</th>
+                  <td>{{ "%.1f"|format(entry.accuracy * 100) }}%</td>
+                  <td>{{ "%.1f"|format(entry.precision * 100) }}%</td>
+                  <td>{{ "%.1f"|format(entry.recall * 100) }}%</td>
+                  <td>{{ "%.1f"|format(entry.f1 * 100) }}%</td>
+                  <td>{{ "%.3f"|format(entry.roc_auc) }}</td>
+                </tr>
+              {% endfor %}
+            </tbody>
+          </table>
+        </div>
+        <p class="chart-note">The best score in this experiment does not mean a model is appropriate for clinical use.</p>
+      </div>
+    </section>
+
+    <section class="card results-card tab-panel" id="panel-explainability" role="tabpanel" aria-labelledby="tab-explainability" tabindex="0" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">05 / MODEL EXPLAINABILITY</p>
+          <h2>What features influence the model?</h2>
+          <p class="section-subtitle">SHAP summarizes how input features contribute to model output. It does not explain biological causes.</p>
+        </div>
+        <span class="step-badge">SHAP · TREE EXPLAINER</span>
+      </div>
+      <div class="explainability-grid">
+        <div class="shap-chart"><img class="chart-image" src="{{ global_shap_chart }}" alt="Global SHAP feature importance ranking using mean absolute SHAP values"></div>
+        <div class="shap-description">
+          <h3>Global explanation</h3>
+          <p>Mean absolute SHAP values across the held-out test samples rank which of these five features most influenced the Random Forest output.</p>
+          <ul class="global-shap-list">
+            {% for feature_name, value in global_shap %}
+              <li><span>{{ feature_name.replace("_", " ") }}</span><strong>{{ "%.4f"|format(value) }}</strong></li>
+            {% endfor %}
+          </ul>
+          <p class="chart-note">For one-off predictions, submit a sample above to see its local SHAP values and direction.</p>
+        </div>
+      </div>
+    </section>
+
+    <section class="card results-card explorer-card tab-panel" id="panel-explorer" role="tabpanel" aria-labelledby="tab-explorer" tabindex="0" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">06 / DATASET EXPLORER</p>
+          <h2>Browse the measurements</h2>
+          <p class="section-subtitle">Filter the included dataset and inspect the same five measurements used by the model.</p>
+        </div>
+        <span class="step-badge">{{ dataset_counts.total }} ROWS</span>
+      </div>
+      <div class="explorer-controls">
+        <label class="search-field">Search measurements <input id="dataset-search" type="search" placeholder="Search values or measurements"></label>
+        <label class="select-field">Diagnosis
+          <select id="diagnosis-filter">
+            <option value="all">All classes</option>
+            <option value="Benign">Benign</option>
+            <option value="Malignant">Malignant</option>
+          </select>
+        </label>
+        <span id="dataset-count" class="explorer-count" aria-live="polite"></span>
+      </div>
+      <div class="table-wrap explorer-table-wrap">
+        <table class="comparison-table explorer-table">
+          <thead><tr><th>CLASS</th><th>RADIUS MEAN</th><th>TEXTURE MEAN</th><th>PERIMETER MEAN</th><th>SMOOTHNESS MEAN</th><th>COMPACTNESS MEAN</th></tr></thead>
+          <tbody id="dataset-rows"></tbody>
+        </table>
+      </div>
+      <div class="pagination">
+        <button id="previous-page" class="sample-button" type="button">← Previous</button>
+        <span id="page-indicator" class="explorer-count"></span>
+        <button id="next-page" class="sample-button" type="button">Next →</button>
+      </div>
+      <p class="chart-note">Rows are displayed for exploration only. The table does not contain patient-identifying information.</p>
+    </section>
+
+    <section class="card results-card architecture-card tab-panel" id="panel-architecture" role="tabpanel" aria-labelledby="tab-architecture" tabindex="0" hidden>
+      <div class="section-heading">
+        <div>
+          <p class="eyebrow">07 / PROJECT ARCHITECTURE</p>
+          <h2>How the app is put together</h2>
+          <p class="section-subtitle">A simple local web application: dataset in, model analysis, visual dashboard out.</p>
+        </div>
+        <span class="step-badge">FLASK · SCIKIT-LEARN</span>
+      </div>
+      <div class="architecture-scroll">
+        <svg class="architecture-diagram" viewBox="0 0 1000 260" role="img" aria-labelledby="architecture-title architecture-desc">
+          <title id="architecture-title">CellScope application architecture</title>
+          <desc id="architecture-desc">Local CSV dataset flows to a Flask and Python machine learning backend, which trains and compares models, then returns predictions and analysis to the browser dashboard and PDF report.</desc>
+          <defs><marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto"><path d="M0,0 L8,4 L0,8 z" fill="#9b83b4"/></marker></defs>
+          <g fill="none" stroke="#9b83b4" stroke-width="2" marker-end="url(#arrow)">
+            <path d="M220 130 H290"/><path d="M500 130 H570"/><path d="M780 105 H845"/><path d="M780 155 H845"/>
+          </g>
+          <g>
+            <rect x="20" y="75" width="200" height="110" rx="14" fill="#f3eff8" stroke="#dcd0e8"/>
+            <text x="120" y="111" text-anchor="middle" class="diagram-kicker">INPUT</text><text x="120" y="137" text-anchor="middle" class="diagram-title">Local CSV dataset</text><text x="120" y="159" text-anchor="middle" class="diagram-copy">569 labeled records</text>
+            <rect x="290" y="75" width="210" height="110" rx="14" fill="#fff" stroke="#dcd0e8"/>
+            <text x="395" y="111" text-anchor="middle" class="diagram-kicker">APPLICATION</text><text x="395" y="137" text-anchor="middle" class="diagram-title">Flask · Python</text><text x="395" y="159" text-anchor="middle" class="diagram-copy">Input checks · routes</text>
+            <rect x="570" y="60" width="210" height="140" rx="14" fill="#f8f4fb" stroke="#dcd0e8"/>
+            <text x="675" y="92" text-anchor="middle" class="diagram-kicker">DATA SCIENCE</text><text x="675" y="119" text-anchor="middle" class="diagram-title">Model analysis</text><text x="675" y="143" text-anchor="middle" class="diagram-copy">Train · compare · SHAP</text><text x="675" y="164" text-anchor="middle" class="diagram-copy">Evaluate · visualize</text>
+            <rect x="845" y="42" width="140" height="74" rx="13" fill="#edf4ed" stroke="#cfddcd"/>
+            <text x="915" y="71" text-anchor="middle" class="diagram-kicker">RESULTS</text><text x="915" y="94" text-anchor="middle" class="diagram-title">Web dashboard</text>
+            <rect x="845" y="143" width="140" height="74" rx="13" fill="#fbf0f5" stroke="#edd9e2"/>
+            <text x="915" y="172" text-anchor="middle" class="diagram-kicker">EXPORT</text><text x="915" y="195" text-anchor="middle" class="diagram-title">PDF report</text>
+          </g>
+        </svg>
+      </div>
+      <p class="chart-note">All processing runs locally when you start the Flask app. This demo does not connect to a patient database.</p>
+    </section>
+
+    <section class="card explain tab-panel" id="panel-about" role="tabpanel" aria-labelledby="tab-about" tabindex="0" hidden>
+      <div class="explain-number">?</div>
+      <div>
+        <p class="eyebrow">THE IMPORTANT CONTEXT</p>
+        <h2>A good score is only the beginning.</h2>
+        <p>
+          This classroom project uses five features from one dataset and one train/test split.
+          Real health technology needs extensive validation on diverse, independent populations,
+          clinical oversight, and regulatory review. A benchmark score is not evidence this model
+          is safe or appropriate for real-world medical use.
+        </p>
+      </div>
+    </section>
+    </div>
+  </main>
+
+  <footer class="footer">
+    <a class="brand footer-brand" href="{{ url_for('home') }}"><span class="brand-mark" aria-hidden="true">+</span><span>CellScope <small>DATA SCIENCE PROJECT</small></span></a>
+    <span>Made for learning · Not for medical use</span>
+    <a href="#panel-explorer" data-tab-target="panel-explorer" class="back-top">Explore data</a>
+    <a href="#top" class="back-top">Back to top ↑</a>
+  </footer>
+  <script>
+    window.cellScopeExamples = {{ examples|tojson }};
+    window.cellScopeDataset = {{ explorer_rows|tojson }};
+  </script>
+  <script src="{{ url_for('static', filename='app.js') }}" defer></script>
+</body>
+</html>
